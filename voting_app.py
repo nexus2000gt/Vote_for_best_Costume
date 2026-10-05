@@ -25,6 +25,12 @@ st.markdown("""
         text-shadow: 0 0 10px #ff0000, 0 0 20px #ff5500, 2px 2px 5px #000;
         font-family: 'Trebuchet MS', 'Arial', sans-serif;
         text-align: center;
+        margin-bottom: 0px !important;
+    }
+
+    h3 {
+        color: #bb86fc !important;
+        text-shadow: 0 0 8px #8a2be2;
     }
 
     p, label {
@@ -44,23 +50,32 @@ st.markdown("""
         background: linear-gradient(45deg, #ff5500, #8a2be2) !important;
         color: white !important;
         font-weight: bold !important;
-        font-size: 20px !important;
+        font-size: 18px !important;
         border-radius: 30px !important;
         border: 2px solid #ffaa00 !important;
-        padding: 12px 28px !important;
+        padding: 10px 24px !important;
         width: 100%;
         box-shadow: 0 0 15px #ff5500;
         transition: all 0.3s ease-in-out;
     }
 
     .stButton > button:hover {
-        transform: scale(1.04);
-        box-shadow: 0 0 25px #8a2be2;
+        transform: scale(1.03);
+        box-shadow: 0 0 25px #8a2be2, 0 0 10px #ff5500;
+        color: #ffeb3b !important;
+    }
+
+    /* Large Glowing Emojis Banner */
+    .spooky-emoji-banner {
+        text-align: center;
+        font-size: 55px;
+        margin: 15px 0;
+        text-shadow: 0 0 15px #ff5500, 0 0 25px #8a2be2;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# 3. GLOBAL SHARED DATA STORAGE (Persists across ALL users and devices)
+# 3. GLOBAL SHARED DATA STORAGE
 @st.cache_resource
 def get_global_data():
     return {
@@ -86,13 +101,9 @@ WOMEN_CONTESTANTS = list(data["women_votes"].keys())
 
 # Header Banner
 st.markdown("<h1 style='font-size: 40px;'>🎃 Spooky Costume Contest 👻</h1>", unsafe_allow_html=True)
-st.markdown("""
-    <div style='text-align: center; margin-bottom: 20px;'>
-        <img src="https://cdn-icons-png.flaticon.com/512/3815/3815316.png" width="80" style="margin: 0 10px;">
-        <img src="https://cdn-icons-png.flaticon.com/512/3815/3815321.png" width="80" style="margin: 0 10px;">
-        <img src="https://cdn-icons-png.flaticon.com/512/3815/3815332.png" width="80" style="margin: 0 10px;">
-    </div>
-""", unsafe_allow_html=True)
+
+# Pure Spooky Emoji Banner
+st.markdown("<div class='spooky-emoji-banner'>🦇 🎃 💀 🕷️ 🕯️ 🕸️ 🧛</div>", unsafe_allow_html=True)
 
 # 4. Main Voting Form
 with st.form("spooky_vote_form", clear_on_submit=True):
@@ -138,10 +149,21 @@ if submitted:
 # 5. Host Admin Panel (Password Protected)
 st.divider()
 with st.expander("🔐 Host / Admin Results Panel"):
-    password = st.text_input("Enter Host Password:", type="password")
+    st.write("Access the host dashboard:")
+    
+    admin_form = st.form("admin_login_form")
+    password = admin_form.text_input("Enter Host Password:", type="password")
+    admin_login = admin_form.form_submit_button("🔑 Enter Admin Panel")
 
-    if password == "Costume2026":
-        st.success("Access Granted, Nexus!")
+    if admin_login:
+        if password == "Costume2026":
+            st.session_state["costume_admin_logged_in"] = True
+        else:
+            st.session_state["costume_admin_logged_in"] = False
+            st.error("Incorrect password.")
+
+    if st.session_state.get("costume_admin_logged_in", False):
+        st.success("Access Granted, Host!")
         
         st.write(f"**Total Voters:** {len(data['voted_guests'])} / {len(GUESTS)}")
         st.write(f"**Guests Who Voted:** {', '.join(data['voted_guests']) if data['voted_guests'] else 'None yet'}")
@@ -167,6 +189,5 @@ with st.expander("🔐 Host / Admin Results Panel"):
                 data["men_votes"][key] = 0
             for key in data["women_votes"]:
                 data["women_votes"][key] = 0
+            st.success("All votes have been reset!")
             st.rerun()
-    elif password:
-        st.error("Incorrect password.")
