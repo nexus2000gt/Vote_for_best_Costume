@@ -163,7 +163,7 @@ with st.expander("🔐 Host / Admin Results Panel"):
             st.error("Incorrect password.")
 
     if st.session_state.get("costume_admin_logged_in", False):
-        st.success("Access Granted, Host!")
+        st.success("Access Granted, Nexus!")
         
         st.write(f"**Total Voters:** {len(data['voted_guests'])} / {len(GUESTS)}")
         st.write(f"**Guests Who Voted:** {', '.join(data['voted_guests']) if data['voted_guests'] else 'None yet'}")
