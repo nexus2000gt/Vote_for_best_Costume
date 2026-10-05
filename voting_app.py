@@ -1,6 +1,5 @@
 import streamlit as st
 import pandas as pd
-import extra_streamlit_components as stx
 
 # 1. Page Configuration
 st.set_page_config(
@@ -9,10 +8,7 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. Cookie Manager Initialization (No caching decorator needed)
-cookie_manager = stx.CookieManager()
-
-# 3. Spooky Halloween Styling
+# 2. Spooky Halloween Styling
 st.markdown("""
     <style>
     .stApp {
@@ -64,22 +60,29 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# 4. Data Initialization (Separated by Category)
-if "men_votes" not in st.session_state:
-    st.session_state["men_votes"] = {
-        "Nexus - Spartan": 0,
-        "Diego - Policeman": 0
+# 3. GLOBAL SHARED DATA STORAGE (Persists across ALL users and devices)
+@st.cache_resource
+def get_global_data():
+    return {
+        "voted_guests": set(),
+        "men_votes": {
+            "Nexus - Spartan": 0,
+            "Diego - Policeman": 0
+        },
+        "women_votes": {
+            "Margarita - Princess": 0,
+            "Julia S - Pocahontas": 0,
+            "Tina - Barbie": 0
+        }
     }
 
-if "women_votes" not in st.session_state:
-    st.session_state["women_votes"] = {
-        "Margarita - Princess": 0,
-        "Julia S - Pocahontas": 0,
-        "Tina - Barbie": 0
-    }
+data = get_global_data()
 
-MEN_CONTESTANTS = list(st.session_state["men_votes"].keys())
-WOMEN_CONTESTANTS = list(st.session_state["women_votes"].keys())
+# Guest list (List of all eligible voters)
+GUESTS = ["Nexus", "Margarita", "Diego", "Julia S", "Tina"]
+
+MEN_CONTESTANTS = list(data["men_votes"].keys())
+WOMEN_CONTESTANTS = list(data["women_votes"].keys())
 
 # Header Banner
 st.markdown("<h1 style='font-size: 40px;'>🎃 Spooky Costume Contest 👻</h1>", unsafe_allow_html=True)
@@ -91,60 +94,62 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
-# Check Cookie status
-has_voted_cookie = cookie_manager.get(cookie="halloween_costume_voted_2cat")
+# 4. Main Voting Form
+with st.form("spooky_vote_form", clear_on_submit=True):
+    st.subheader("🕸️ Select Your Name & Cast Votes")
+    
+    # Voter Identity
+    voter_name = st.selectbox("👤 Who are you?", ["-- Select your name --"] + GUESTS)
+    
+    st.write("---")
+    
+    # Category 1: Best Male Costume
+    chosen_man = st.selectbox(
+        "🕺 Best Male Costume:", 
+        ["-- Select male contestant --"] + MEN_CONTESTANTS
+    )
+    
+    st.write("---")
+    
+    # Category 2: Best Female Costume
+    chosen_woman = st.selectbox(
+        "💃 Best Female Costume:", 
+        ["-- Select female contestant --"] + WOMEN_CONTESTANTS
+    )
+    
+    submitted = st.form_submit_button("🕷️ Submit Secret Votes!")
 
-# 5. Main Voting Area
-if has_voted_cookie:
-    st.warning("🔒 **You have already cast your votes from this device!** Multi-voting is blocked.")
-    st.info("👻 Enjoy the party! The host will reveal the winners soon.")
-else:
-    with st.form("spooky_vote_form", clear_on_submit=True):
-        st.subheader("🕸️ Cast Your Secret Votes")
-        
-        # Category 1: Best Male Costume
-        chosen_man = st.selectbox(
-            "🕺 Best Male Costume:", 
-            ["-- Select male contestant --"] + MEN_CONTESTANTS
-        )
-        
-        st.write("---")
-        
-        # Category 2: Best Female Costume
-        chosen_woman = st.selectbox(
-            "💃 Best Female Costume:", 
-            ["-- Select female contestant --"] + WOMEN_CONTESTANTS
-        )
-        
-        submitted = st.form_submit_button("🕷️ Submit Secret Votes!")
+if submitted:
+    if voter_name == "-- Select your name --":
+        st.error("Please select your name from the guest list!")
+    elif chosen_man == "-- Select male contestant --" or chosen_woman == "-- Select female contestant --":
+        st.error("Please choose a contestant for BOTH categories!")
+    elif voter_name in data["voted_guests"]:
+        st.warning(f"⚠️ **{voter_name}**, a vote has already been submitted under your name!")
+    else:
+        # Record Secret Vote globally
+        data["men_votes"][chosen_man] += 1
+        data["women_votes"][chosen_woman] += 1
+        data["voted_guests"].add(voter_name)
 
-    if submitted:
-        if chosen_man == "-- Select male contestant --" or chosen_woman == "-- Select female contestant --":
-            st.error("Please pick a candidate for BOTH categories before submitting!")
-        else:
-            # 1. Update Vote Tallies
-            st.session_state["men_votes"][chosen_man] += 1
-            st.session_state["women_votes"][chosen_woman] += 1
+        st.balloons()
+        st.success(f"🎉 **Thank you, {voter_name}!** Your secret votes have been registered globally!")
 
-            # 2. Set Cookie on the user's browser (expires in 1 day)
-            cookie_manager.set("halloween_costume_voted_2cat", "true", key="voted_cookie_set_2cat")
-
-            st.balloons()
-            st.success("🎉 **Votes Submitted Successfully!** Your phone is recorded so your votes stay secret and single-use.")
-            st.rerun()
-
-# 6. Host Admin Panel (Password Protected)
+# 5. Host Admin Panel (Password Protected)
 st.divider()
 with st.expander("🔐 Host / Admin Results Panel"):
     password = st.text_input("Enter Host Password:", type="password")
 
     if password == "Costume2026":
-        st.success("Access Granted, Host!")
+        st.success("Access Granted, Nexus!")
         
+        st.write(f"**Total Voters:** {len(data['voted_guests'])} / {len(GUESTS)}")
+        st.write(f"**Guests Who Voted:** {', '.join(data['voted_guests']) if data['voted_guests'] else 'None yet'}")
+        st.write("---")
+
         # Category 1 Results
         st.subheader("🕺 Best Male Costume Results")
-        df_men = pd.DataFrame(list(st.session_state["men_votes"].items()), columns=["Contestant", "Votes"])
-        df_men = df_men.sort_values(by="Votes", ascending=False)
+        df_men = pd.DataFrame(list(data["men_votes"].items()), columns=["Contestant", "Votes"]).sort_values(by="Votes", ascending=False)
         st.dataframe(df_men, use_container_width=True)
         st.bar_chart(df_men.set_index("Contestant"))
 
@@ -152,16 +157,16 @@ with st.expander("🔐 Host / Admin Results Panel"):
 
         # Category 2 Results
         st.subheader("💃 Best Female Costume Results")
-        df_women = pd.DataFrame(list(st.session_state["women_votes"].items()), columns=["Contestant", "Votes"])
-        df_women = df_women.sort_values(by="Votes", ascending=False)
+        df_women = pd.DataFrame(list(data["women_votes"].items()), columns=["Contestant", "Votes"]).sort_values(by="Votes", ascending=False)
         st.dataframe(df_women, use_container_width=True)
         st.bar_chart(df_women.set_index("Contestant"))
 
         if st.button("🔄 Reset All Tally Votes"):
-            for key in st.session_state["men_votes"]:
-                st.session_state["men_votes"][key] = 0
-            for key in st.session_state["women_votes"]:
-                st.session_state["women_votes"][key] = 0
+            data["voted_guests"].clear()
+            for key in data["men_votes"]:
+                data["men_votes"][key] = 0
+            for key in data["women_votes"]:
+                data["women_votes"][key] = 0
             st.rerun()
     elif password:
         st.error("Incorrect password.")
