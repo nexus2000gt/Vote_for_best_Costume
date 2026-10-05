@@ -10,7 +10,7 @@ st.set_page_config(
 )
 
 # 2. Cookie Manager Initialization
-@st.cache_resource(experimental_allow_widgets=True)
+@st.cache_resource
 def get_cookie_manager():
     return stx.CookieManager()
 
