@@ -9,12 +9,8 @@ st.set_page_config(
     layout="centered"
 )
 
-# 2. Cookie Manager Initialization
-@st.cache_resource
-def get_cookie_manager():
-    return stx.CookieManager()
-
-cookie_manager = get_cookie_manager()
+# 2. Cookie Manager Initialization (No caching decorator needed)
+cookie_manager = stx.CookieManager()
 
 # 3. Spooky Halloween Styling
 st.markdown("""
@@ -142,7 +138,7 @@ st.divider()
 with st.expander("🔐 Host / Admin Results Panel"):
     password = st.text_input("Enter Host Password:", type="password")
 
-    if password == "costume2026":
+    if password == "Costume2026":
         st.success("Access Granted, Host!")
         
         # Category 1 Results
