@@ -75,7 +75,6 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-python
 
 # 3. GLOBAL SHARED DATA STORAGE
 @st.cache_resource
