@@ -101,7 +101,7 @@ def get_global_data():
             "Mavka (Ukranian magical creature)": 0,
             "Alien": 0,
             "TBC": 0,
-            "Yisbeth - Peach": 0,
+            "Peach": 0,
             "Harley Quinn's daughter": 0,
             "Wrestler girl": 0,
             "TBC": 0,
