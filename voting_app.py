@@ -92,7 +92,7 @@ def get_global_data():
             "TBC": 0,
             "TBC": 0,
             "TBC": 0,
-            "TBC": 0,,
+            "TBC": 0,
             "TBC": 0,
             "TBC": 0,
         },
