@@ -75,26 +75,82 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+python
+
 # 3. GLOBAL SHARED DATA STORAGE
 @st.cache_resource
 def get_global_data():
     return {
         "voted_guests": set(),
         "men_votes": {
-            "Nexus - Spartan": 0,
-            "Diego - Policeman": 0
+            "Nexus - Leonidas/Spartan": 0,
+            "Diego Ruiz - Calzetin con rombos-man": 0,
+            "Alex Rivas - TBC": 0,
+            "Yherman Alejandro - Mario y Yoshi": 0,
+            "Angel - TBC": 0,
+            "Carlos Sanchez (Jarochito) - TBC": 0,
+            "Ivan Santana - TBC": 0,
+            "Luis Daniel - TBC": 0,
+            "Marco - TBC": 0,
+            "Mateusz - TBC": 0,
+            "Zayr - TBC": 0,
+            "Witek - TBC": 0,
+            "Miguel - TBC": 0
         },
         "women_votes": {
-            "Margarita - Princess": 0,
-            "Julia S - Pocahontas": 0,
-            "Tina - Barbie": 0
+            "Margarita - Black swan": 0,
+            "Tina - Mavka (Ukranian magical creature)": 0,
+            "Julia Stefanini - Alien": 0,
+            "Dariana - TBC": 0,
+            "Yisbeth - Peach": 0,
+            "Karolina Anderson - TBC": 0,
+            "Frida - TBC": 0,
+            "Natalia de Jarocho - TBC": 0,
+            "Marta - TBC": 0,
+            "Wera-duża - TBC": 0,
+            "Wera-mała - TBC": 0,
+            "Sonya - TBC": 0,
+            "Kateryna - TBC": 0,
+            "Larisa - TBC": 0,
+            "Adriana Ayala - TBC": 0,
+            "Eliza - TBC": 0
         }
     }
 
 data = get_global_data()
 
 # Guest list (List of all eligible voters)
-GUESTS = ["Nexus", "Margarita", "Diego", "Julia S", "Tina"]
+GUESTS = [
+    "Nexus",
+    "Margarita",
+    "Tina",
+    "Diego Ruiz",
+    "Julia Stefanini",
+    "Alex Rivas",
+    "Dariana",
+    "Yherman Alejandro",
+    "Yisbeth",
+    "Karolina Anderson",
+    "Angel",
+    "Frida",
+    "Carlos Sanchez (Jarochito)",
+    "Natalia de Jarocho",
+    "Ivan Santana",
+    "Luis Daniel",
+    "Marta",
+    "Marco",
+    "Mateusz",
+    "Wera-duża",
+    "Wera-mała",
+    "Sonya",
+    "Kateryna",
+    "Zayr",
+    "Larisa",
+    "Adriana Ayala",
+    "Witek",
+    "Miguel",
+    "Eliza"
+]
 
 MEN_CONTESTANTS = list(data["men_votes"].keys())
 WOMEN_CONTESTANTS = list(data["women_votes"].keys())
