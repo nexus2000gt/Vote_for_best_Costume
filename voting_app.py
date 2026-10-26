@@ -113,9 +113,9 @@ GUESTS = [
     "Nexus", "Margarita", "Tina", "Diego Ruiz", "Julia Stefanini",
     "Alex Rivas", "Dariana", "Yherman Alejandro", "Yisbeth", "Karolina Anderson",
     "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Ivan Santana",
-    "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
+    "Olaya", "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
     "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa",
-    "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya"
+    "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya", "Edson"
 ]
 
 # Header Banner
