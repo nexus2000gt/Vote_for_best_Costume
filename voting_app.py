@@ -92,9 +92,6 @@ def get_global_data():
             "Star Lord": 0,
             "Edward Cullen": 0,
             "Wolverine": 0,
-            "TBC": 0,
-            "TBC": 0,
-            "TBC": 0,
         },
         "women_votes": {
             "Black swan": 0,
@@ -106,12 +103,6 @@ def get_global_data():
             "Wrestler girl": 0,
             "Female Scarecrow": 0,
             "Gamora": 0,
-            "TBC": 0,
-            "TBC": 0,
-            "TBC": 0,
-            "TBC": 0,
-            "TBC": 0,           
-            "TBC": 0,
         }
     }
 
@@ -119,46 +110,16 @@ data = get_global_data()
 
 # Guest list (List of all eligible voters)
 GUESTS = [
-    "Nexus",
-    "Margarita",
-    "Tina",
-    "Diego Ruiz",
-    "Julia Stefanini",
-    "Alex Rivas",
-    "Dariana",
-    "Yherman Alejandro",
-    "Yisbeth",
-    "Karolina Anderson",
-    "Angel",
-    "Frida",
-    "Carlos Sanchez (Jarochito)",
-    "Natalia de Jarocho",
-    "Ivan Santana",
-    "Luis Daniel",
-    "Marta",
-    "Marco",
-    "Mateusz",
-    "Wera-duża",
-    "Wera-mała",
-    "Sonya",
-    "Kateryna",
-    "Zair",
-    "Larisa",
-    "Adriana Ayala",
-    "Witek",
-    "Miguel",
-    "Eliza",
-    "Ruslan",
-    "Vasya"
+    "Nexus", "Margarita", "Tina", "Diego Ruiz", "Julia Stefanini",
+    "Alex Rivas", "Dariana", "Yherman Alejandro", "Yisbeth", "Karolina Anderson",
+    "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Ivan Santana",
+    "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
+    "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa",
+    "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya"
 ]
-
-MEN_CONTESTANTS = list(data["men_votes"].keys())
-WOMEN_CONTESTANTS = list(data["women_votes"].keys())
 
 # Header Banner
 st.markdown("<h1 style='font-size: 40px;'>🎃 Spooky Costume Contest 👻</h1>", unsafe_allow_html=True)
-
-# Pure Spooky Emoji Banner
 st.markdown("<div class='spooky-emoji-banner'>🦇 🎃 💀 🕷️ 🕯️ 🕸️ 🧛</div>", unsafe_allow_html=True)
 
 # 4. Main Voting Form
@@ -171,32 +132,50 @@ with st.form("spooky_vote_form", clear_on_submit=True):
     st.write("---")
     
     # Category 1: Best Male Costume
-    chosen_man = st.selectbox(
-        "🕺 Best Male Costume:", 
-        ["-- Select male contestant --"] + MEN_CONTESTANTS
-    )
+    men_options = list(data["men_votes"].keys()) + ["Other (Type below)"]
+    chosen_man_selection = st.selectbox("🕺 Best Male Costume:", ["-- Select male contestant --"] + men_options)
     
+    custom_man = ""
+    if chosen_man_selection == "Other (Type below)":
+        custom_man = st.text_input("✍️ Enter custom Male Costume name:")
+
     st.write("---")
     
     # Category 2: Best Female Costume
-    chosen_woman = st.selectbox(
-        "💃 Best Female Costume:", 
-        ["-- Select female contestant --"] + WOMEN_CONTESTANTS
-    )
+    women_options = list(data["women_votes"].keys()) + ["Other (Type below)"]
+    chosen_woman_selection = st.selectbox("💃 Best Female Costume:", ["-- Select female contestant --"] + women_options)
+    
+    custom_woman = ""
+    if chosen_woman_selection == "Other (Type below)":
+        custom_woman = st.text_input("✍️ Enter custom Female Costume name:")
     
     submitted = st.form_submit_button("🕷️ Submit Secret Votes!")
 
 if submitted:
+    # Resolve final choices (handling "Other" inputs)
+    final_man = custom_man.strip() if chosen_man_selection == "Other (Type below)" else chosen_man_selection
+    final_woman = custom_woman.strip() if chosen_woman_selection == "Other (Type below)" else chosen_woman_selection
+
     if voter_name == "-- Select your name --":
         st.error("Please select your name from the guest list!")
-    elif chosen_man == "-- Select male contestant --" or chosen_woman == "-- Select female contestant --":
+    elif chosen_man_selection == "-- Select male contestant --" or chosen_woman_selection == "-- Select female contestant --":
         st.error("Please choose a contestant for BOTH categories!")
+    elif chosen_man_selection == "Other (Type below)" and not custom_man.strip():
+        st.error("Please write down the name of the custom Male costume!")
+    elif chosen_woman_selection == "Other (Type below)" and not custom_woman.strip():
+        st.error("Please write down the name of the custom Female costume!")
     elif voter_name in data["voted_guests"]:
         st.warning(f"⚠️ **{voter_name}**, a vote has already been submitted under your name!")
     else:
+        # Dynamically add custom contestants to dictionaries if they don't exist yet
+        if final_man not in data["men_votes"]:
+            data["men_votes"][final_man] = 0
+        if final_woman not in data["women_votes"]:
+            data["women_votes"][final_woman] = 0
+
         # Record Secret Vote globally
-        data["men_votes"][chosen_man] += 1
-        data["women_votes"][chosen_woman] += 1
+        data["men_votes"][final_man] += 1
+        data["women_votes"][final_woman] += 1
         data["voted_guests"].add(voter_name)
 
         st.balloons()
@@ -241,9 +220,9 @@ with st.expander("🔐 Host / Admin Results Panel"):
 
         if st.button("🔄 Reset All Tally Votes"):
             data["voted_guests"].clear()
-            for key in data["men_votes"]:
+            for key in list(data["men_votes"].keys()):
                 data["men_votes"][key] = 0
-            for key in data["women_votes"]:
+            for key in list(data["women_votes"].keys()):
                 data["women_votes"][key] = 0
             st.success("All votes have been reset!")
             st.rerun()
