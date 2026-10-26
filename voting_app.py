@@ -38,7 +38,7 @@ st.markdown("""
         font-weight: bold;
     }
 
-    .stForm, div[data-testid="stExpander"] {
+    div[data-testid="stForm"], div[data-testid="stExpander"] {
         background-color: rgba(20, 10, 30, 0.82) !important;
         border-radius: 20px !important;
         padding: 25px !important;
@@ -122,36 +122,39 @@ GUESTS = [
 st.markdown("<h1 style='font-size: 40px;'>🎃 Spooky Costume Contest 👻</h1>", unsafe_allow_html=True)
 st.markdown("<div class='spooky-emoji-banner'>🦇 🎃 💀 🕷️ 🕯️ 🕸️ 🧛</div>", unsafe_allow_html=True)
 
-# 4. Main Voting Form
-with st.form("spooky_vote_form", clear_on_submit=True):
-    st.subheader("🕸️ Select Your Name & Cast Votes")
-    
-    # Voter Identity
-    voter_name = st.selectbox("👤 Who are you?", ["-- Select your name --"] + GUESTS)
-    
-    st.write("---")
-    
-    # Category 1: Best Male Costume
-    men_options = list(data["men_votes"].keys()) + ["Other (Type below)"]
-    chosen_man_selection = st.selectbox("🕺 Best Male Costume:", ["-- Select male contestant --"] + men_options)
-    
-    custom_man = ""
-    if chosen_man_selection == "Other (Type below)":
-        custom_man = st.text_input("✍️ Enter custom Male Costume name:")
+# 4. Main Voting Form (using normal widgets with a form container or state management)
+# To allow instant UI updates when choosing "Other", we handle selects outside a strict st.form, 
+# or use widget keys. Let's use standard widgets with a submit block.
 
-    st.write("---")
-    
-    # Category 2: Best Female Costume
-    women_options = list(data["women_votes"].keys()) + ["Other (Type below)"]
-    chosen_woman_selection = st.selectbox("💃 Best Female Costume:", ["-- Select female contestant --"] + women_options)
-    
-    custom_woman = ""
-    if chosen_woman_selection == "Other (Type below)":
-        custom_woman = st.text_input("✍️ Enter custom Female Costume name:")
-    
-    submitted = st.form_submit_button("🕷️ Submit Secret Votes!")
+st.subheader("🕸️ Select Your Name & Cast Votes")
 
-if submitted:
+# Voter Identity
+voter_name = st.selectbox("👤 Who are you?", ["-- Select your name --"] + GUESTS)
+
+st.write("---")
+
+# Category 1: Best Male Costume
+men_options = list(data["men_votes"].keys()) + ["Other (Type below)"]
+chosen_man_selection = st.selectbox("🕺 Best Male Costume:", ["-- Select male contestant --"] + men_options)
+
+custom_man = ""
+if chosen_man_selection == "Other (Type below)":
+    custom_man = st.text_input("✍️ Enter custom Male Costume name:")
+
+st.write("---")
+
+# Category 2: Best Female Costume
+women_options = list(data["women_votes"].keys()) + ["Other (Type below)"]
+chosen_woman_selection = st.selectbox("💃 Best Female Costume:", ["-- Select female contestant --"] + women_options)
+
+custom_woman = ""
+if chosen_woman_selection == "Other (Type below)":
+    custom_woman = st.text_input("✍️ Enter custom Female Costume name:")
+
+st.write("---")
+
+# Submission Button
+if st.button("🕷️ Submit Secret Votes!"):
     # Resolve final choices (handling "Other" inputs)
     final_man = custom_man.strip() if chosen_man_selection == "Other (Type below)" else chosen_man_selection
     final_woman = custom_woman.strip() if chosen_woman_selection == "Other (Type below)" else chosen_woman_selection
