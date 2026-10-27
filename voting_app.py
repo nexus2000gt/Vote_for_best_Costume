@@ -92,7 +92,7 @@ def get_global_data():
             "Star Lord": 0,
             "Edward Cullen": 0,
             "Wolverine": 0,
-            "Mushroom and snail": 0,
+            "Snail": 0,
         },
         "women_votes": {
             "Black swan": 0,
@@ -104,6 +104,7 @@ def get_global_data():
             "Wrestler girl": 0,
             "Female Scarecrow": 0,
             "Gamora": 0,
+            "Mushroom": 0,
         }
     }
 
