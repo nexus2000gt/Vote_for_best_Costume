@@ -115,7 +115,7 @@ GUESTS = [
     "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Ivan Santana",
     "Olaya", "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
     "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa",
-    "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya", "Edson", "Vanshi"
+    "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya", "Edson", "Vanshi", "Klaudia M.", "Luka"
 ]
 
 # Header Banner
