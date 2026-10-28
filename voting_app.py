@@ -94,7 +94,8 @@ def get_global_data():
             "Wolverine": 0,
             "Snail": 0,
             "Google Teams": 0,
-            "Remi (Ratatouille)": 0,
+            "Chef (Ratatouille)": 0,
+            
         },
         "women_votes": {
             "Black swan": 0,
@@ -109,7 +110,7 @@ def get_global_data():
             "Mushroom": 0,
             "She ware-wolf": 0,
             "Britney Spears": 0,
-            "Chef (Ratatouille)": 0,
+            "Remi (Ratatouille)": 0,
         }
     }
 
