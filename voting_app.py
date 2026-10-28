@@ -94,6 +94,7 @@ def get_global_data():
             "Wolverine": 0,
             "Snail": 0,
             "Google Teams": 0,
+            "Remi (Ratatouille)": 0,
         },
         "women_votes": {
             "Black swan": 0,
@@ -108,6 +109,7 @@ def get_global_data():
             "Mushroom": 0,
             "She ware-wolf": 0,
             "Britney Spears": 0,
+            "Chef (Ratatouille)": 0,
         }
     }
 
@@ -115,9 +117,9 @@ data = get_global_data()
 
 # Guest list (List of all eligible voters)
 GUESTS = [
-    "Nexus", "Margarita", "Tina", "Diego Ruiz", "Julia Stefanini",
+    "Angel", "Nexus", "Margarita", "Tina", "Diego Ruiz", "Julia Stefanini",
     "Alex Rivas", "Dariana", "Yherman Alejandro", "Yisbeth", "Karolina Anderson",
-    "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Ivan Santana",
+    "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Frida" "Ivan Santana",
     "Olaya", "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
     "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa",
     "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya", "Edson", "Vanshi", "Klaudia M.", "Luka"
