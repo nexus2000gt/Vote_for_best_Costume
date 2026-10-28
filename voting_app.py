@@ -93,6 +93,7 @@ def get_global_data():
             "Edward Cullen": 0,
             "Wolverine": 0,
             "Snail": 0,
+            "Google Teams": 0,
         },
         "women_votes": {
             "Black swan": 0,
@@ -105,6 +106,8 @@ def get_global_data():
             "Female Scarecrow": 0,
             "Gamora": 0,
             "Mushroom": 0,
+            "She ware-wolf": 0,
+            "Britney Spears": 0,
         }
     }
 
