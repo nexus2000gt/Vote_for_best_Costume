@@ -51,6 +51,7 @@ FEMALE_CANDIDATES = [
     "She ware-wolf",
     "Britney Spears",
     "Remi (Ratatouille)",
+    "Fairy",
 ]
 
 OTHER_OPTION = "Other"
