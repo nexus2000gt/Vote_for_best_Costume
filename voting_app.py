@@ -567,7 +567,8 @@ st.warning(
 reset_confirmed = st.checkbox(
     "I understand that this permanently deletes all voting results."
 )
- if st.button(
+
+if st.button(
         "Reset all votes",
         disabled=not reset_confirmed,
     ):
