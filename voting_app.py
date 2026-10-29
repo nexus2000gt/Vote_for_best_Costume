@@ -92,9 +92,6 @@ st.markdown(
         border-radius: 10px;
         font-weight: 700;
     }
-    </style>
-    """,
-    unsafe_allow_html=True,
 
     button[kind="secondary"] {
         color: #ff6b6b !important;
@@ -440,13 +437,13 @@ def render_admin_page(cookie_controller):
         st.success("Admin access granted.")
 
     with header_right:
-      if st.button(
-        "Log out",
-        type="secondary",
-        use_container_width=True,
-    ):
-        st.session_state.admin_authenticated = False
-        st.rerun()
+        if st.button(
+            "Log out",
+            type="secondary",
+            use_container_width=True,
+        ):
+            st.session_state.admin_authenticated = False
+            st.rerun()
 
     turnout, male_results, female_results = load_results()
 
@@ -479,7 +476,6 @@ def render_admin_page(cookie_controller):
         try:
             reset_votes()
 
-            # Clears the cookie for the browser currently used by the host.
             cookie_controller.remove(COOKIE_NAME)
 
             st.session_state.pop(
@@ -513,3 +509,4 @@ if page == "🎃 Vote":
     render_vote_page(cookie_controller)
 else:
     render_admin_page(cookie_controller)
+```
