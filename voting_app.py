@@ -261,9 +261,7 @@ def render_vote_page(cookie_controller):
         <div class="spooky-card">
             Vote for one contestant in each category.
             <div class="small-note">
-                One submission is allowed per browser. This is a casual party
-                contest, so clearing browser cookies or using another browser
-                can bypass this reminder.
+                One submission is allowed per person.
             </div>
         </div>
         """,
