@@ -95,6 +95,15 @@ st.markdown(
     </style>
     """,
     unsafe_allow_html=True,
+
+    button[kind="secondary"] {
+    color: #ff6b6b !important;
+    border-color: #ff6b6b !important;
+}
+
+button[kind="secondary"] p {
+    color: #ff6b6b !important;
+}
 )
 
 
@@ -322,7 +331,7 @@ def render_vote_page(cookie_controller):
 
     if cookie_controller.get(COOKIE_NAME):
         st.warning(
-            "This browser already has a vote reminder. No ballot was saved."
+            "This browser already has a vote...cheater! No ballot was saved."
         )
         return
 
@@ -428,9 +437,13 @@ def render_admin_page(cookie_controller):
         st.success("Admin access granted.")
 
     with header_right:
-        if st.button("Log out", use_container_width=True):
-            st.session_state.admin_authenticated = False
-            st.rerun()
+      if st.button(
+        "Log out",
+        type="secondary",
+        use_container_width=True,
+    ):
+        st.session_state.admin_authenticated = False
+        st.rerun()
 
     turnout, male_results, female_results = load_results()
 
