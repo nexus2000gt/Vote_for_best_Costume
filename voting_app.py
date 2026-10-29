@@ -1,239 +1,601 @@
-import streamlit as st
-import pandas as pd
+import streamlit
+import pandas
+import sqlite3
+import hashlib
+import secrets
+import hmac
+from datetime import datetime, timezone
 
-# 1. Page Configuration
+from streamlit_cookies_controller import CookieController
+
+
+st = streamlit
+pd = pandas
+
 st.set_page_config(
-    page_title="Spooky Costume Contest",
-    page_icon="🎃",
-    layout="centered"
+    page_title="Halloween Costume Voting",
+    page_icon="ðŸŽƒ",
+    layout="wide",
 )
 
-# 2. Spooky Halloween Styling
-st.markdown("""
-    <style>
-    .stApp {
-        background: linear-gradient(rgba(15, 12, 41, 0.88), rgba(48, 43, 99, 0.88)), 
-                    url("https://images.unsplash.com/photo-1508739773434-c26b3d09e071?q=80&w=1200&auto=format&fit=crop");
-        background-size: cover;
-        background-position: center;
-        background-attachment: fixed;
-        color: #f1f1f1;
-    }
+DB_PATH = "halloween_votes.db"
+COOKIE_NAME = "costume_vote_submitted"
+LOCAL_TESTING_ONLY = False
 
-    h1 {
-        color: #ff5500 !important;
-        text-shadow: 0 0 10px #ff0000, 0 0 20px #ff5500, 2px 2px 5px #000;
-        font-family: 'Trebuchet MS', 'Arial', sans-serif;
-        text-align: center;
-        margin-bottom: 0px !important;
-    }
-
-    h3 {
-        color: #bb86fc !important;
-        text-shadow: 0 0 8px #8a2be2;
-    }
-
-    p, label {
-        color: #e0e0e0 !important;
-        font-weight: bold;
-    }
-
-    div[data-testid="stForm"], div[data-testid="stExpander"] {
-        background-color: rgba(20, 10, 30, 0.82) !important;
-        border-radius: 20px !important;
-        padding: 25px !important;
-        border: 2px solid #8a2be2 !important;
-        box-shadow: 0 0 20px rgba(138, 43, 226, 0.6);
-    }
-
-    .stButton > button {
-        background: linear-gradient(45deg, #ff5500, #8a2be2) !important;
-        color: white !important;
-        font-weight: bold !important;
-        font-size: 18px !important;
-        border-radius: 30px !important;
-        border: 2px solid #ffaa00 !important;
-        padding: 10px 24px !important;
-        width: 100%;
-        box-shadow: 0 0 15px #ff5500;
-        transition: all 0.3s ease-in-out;
-    }
-
-    .stButton > button:hover {
-        transform: scale(1.03);
-        box-shadow: 0 0 25px #8a2be2, 0 0 10px #ff5500;
-        color: #ffeb3b !important;
-    }
-
-    /* Large Glowing Emojis Banner */
-    .spooky-emoji-banner {
-        text-align: center;
-        font-size: 55px;
-        margin: 15px 0;
-        text-shadow: 0 0 15px #ff5500, 0 0 25px #8a2be2;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-
-# 3. GLOBAL SHARED DATA STORAGE
-@st.cache_resource
-def get_global_data():
-    return {
-        "voted_guests": set(),
-        "men_votes": {
-            "Leonidas/Spartan": 0,
-            "Calzetin con rombos-man": 0,
-            "Dinosaur": 0,
-            "Mario & Yoshi": 0,
-            "Wrestler man": 0,
-            "Model": 0,
-            "Male Scarecrow": 0,
-            "Star Lord": 0,
-            "Edward Cullen": 0,
-            "Wolverine": 0,
-            "Snail": 0,
-            "Google Teams": 0,
-            "Chef (Ratatouille)": 0,
-            
-        },
-        "women_votes": {
-            "Black swan": 0,
-            "Mavka (Ukranian magical creature)": 0,
-            "Alien": 0,
-            "Nagini": 0,
-            "Peach": 0,
-            "Harley Quinn's daughter": 0,
-            "Wrestler girl": 0,
-            "Female Scarecrow": 0,
-            "Gamora": 0,
-            "Mushroom": 0,
-            "She ware-wolf": 0,
-            "Britney Spears": 0,
-            "Remi (Ratatouille)": 0,
-        }
-    }
-
-data = get_global_data()
-
-# Guest list (List of all eligible voters)
-GUESTS = [
-    "Angel", "Nexus", "Margarita", "Tina", "Diego Ruiz", "Julia Stefanini",
-    "Alex Rivas", "Dariana", "Yherman Alejandro", "Yisbeth", "Karolina Anderson",
-    "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Frida", "Ivan Santana",
-    "Olaya", "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
-    "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa", "Kamil", "Nastia", "Kasia D", "Adrian",
-    "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya", "Edson", "Vanshi", "Klaudia M.", "Luka"
+ELIGIBLE_VOTERS = [
+    'Angel',
+    'Nexus',
+    'Margarita',
+    'Tina',
+    'Diego Ruiz',
+    'Julia Stefanini',
+    'Alex Rivas',
+    'Dariana',
+    'Yherman Alejandro',
+    'Yisbeth',
+    'Karolina Anderson',
+    'Frida',
+    'Carlos Sanchez (Jarochito)',
+    'Natalia de Jarocho',
+    'Ivan Santana',
+    'Olaya',
+    'Luis Daniel',
+    'Marta',
+    'Marco',
+    'Mateusz',
+    'Wera-duża',
+    'Wera-mała',
+    'Sonya',
+    'Kateryna',
+    'Zair',
+    'Larisa',
+    'Kamil',
+    'Nastia',
+    'Kasia D',
+    'Adrian',
+    'Adriana Ayala',
+    'Witek',
+    'Miguel',
+    'Eliza',
+    'Ruslan',
+    'Vasya',
+    'Edson',
+    'Vanshi',
+    'Klaudia M.',
+    'Luka',
 ]
 
-# Header Banner
-st.markdown("<h1 style='font-size: 40px;'>🎃 Spooky Costume Contest 👻</h1>", unsafe_allow_html=True)
-st.markdown("<div class='spooky-emoji-banner'>🦇 🎃 💀 🕷️ 🕯️ 🕸️ 🧛</div>", unsafe_allow_html=True)
+# Only SHA-256 hashes are stored here. Plaintext voter PINs are kept solely in
+# the separate organizer-only mapping file.
+PIN_HASHES = {
+    'Angel': '03f65a290e11d78647e557030042d74d268521768c4a1648264a1b38047a4b37',
+    'Nexus': 'ae600959378c54c51d1b867e77cef34eba55658bf2abcec187cfe901526d0a80',
+    'Margarita': 'a7d2a606c6ce4168f1f88c3b11afb70472841708b221f666323e68a95c91c173',
+    'Tina': '07a0708ed8472c991e0545aaf3433da3b61de39001f6dc3706516c13f3d49e52',
+    'Diego Ruiz': 'f85dd1cb11c453b93c052d8dcf30b925aa4082f1e992c5ad51b762cb97bdf153',
+    'Julia Stefanini': 'e85a870aeb6eed9e560269c22f3f3d0823a5a1aa6536bb1bf8d90621b9e70fd1',
+    'Alex Rivas': '64f363361a0acc78ce6d9e6240ca840dfc9a338bab1a2fcb7c6270baf81b1f86',
+    'Dariana': '8e5fabc4550b9c8521b119ede0270237fd4891a697330a2ef5fdea4dde53bf13',
+    'Yherman Alejandro': 'f36e412aea00d7c622f3d331c5ceec42eaf18bda2d0374971a09fc79d7d9f293',
+    'Yisbeth': '560b29022e637e13a843d6e32927a666e6a00edf0dbef9b6c29495b34512a103',
+    'Karolina Anderson': 'ee932b02fc14995ab1085f9c686b916d3dd5d21361ca4c20923965257334991d',
+    'Frida': '3f14a60b7590cb27fad945421e73a7f76c1125f3fd982e96a110ad1c9929b9da',
+    'Carlos Sanchez (Jarochito)': 'f309ff5ddc25bf94b74483e860148a0b0d1069c45dfdbacbb6ceeecdda167487',
+    'Natalia de Jarocho': 'cc4996f23b1298387d649919eaa4f4f1f1c26ef836af118ca1334a366efbf979',
+    'Ivan Santana': 'e96e85632cd66c4c1d9184b1d85eeaa66b830386ccb69d1f9fed089c30b92c82',
+    'Olaya': 'fd0d5cf8daff925c6e741eaf958ef32b31ebb0109bd575ad2a78af30860d8a08',
+    'Luis Daniel': '5b7267c26cc279fdbe97b434c889c0ec3831f2294b19e4b8a9228de154551503',
+    'Marta': 'e485f271f7db87ad8888f40c7b00412cc0c97c9bbf35790e7ba85e08ff602860',
+    'Marco': '7b3b4e5fed79d4b93089785bd5654a021da6426cd154e1b98a630be06a50f281',
+    'Mateusz': 'e7bb14f4c55efcc91e049546838499c176b2f0e01c2161bd9517c32cd1f3a37b',
+    'Wera-duża': '9b5173ba93decd311f89513f060a62d652ec189f0dba97db15c2a07787add029',
+    'Wera-mała': '152bf02d1a3d3094d00cbce4933d5e38a402fa94ebad8c225e03fd98a3483441',
+    'Sonya': '0193d52e5b14627091d6163a8546c79f708bb374ba31f9d5b1173e028a96ca0f',
+    'Kateryna': '92c23d77b6b8e8327128859040f3feddb2fbdc914a09f8d37e222f30b4f1a38c',
+    'Zair': '77f16846583961d1e1e490d0cb58e1bd65898159b6327ef400bd5000eb2394bd',
+    'Larisa': '33e335ace8e8fbf3dfeef681c26f238b9a79428447db482dda0a2656f1c12295',
+    'Kamil': 'da37e500c65ac7c6de9d491e531836b3e866dd1b05a445b30714744469d07411',
+    'Nastia': '1395d0b76b56509da2cd59c06ca9522cc2b7aff483dcd622b507c21e74613278',
+    'Kasia D': '0c49468f854e20a591f566e2bd39700725de0d288a564ac7be82eba1b85b75b9',
+    'Adrian': '478052290f5e77d85bbb7105568d4839d62081096a8685816c15e14604427f82',
+    'Adriana Ayala': '4044d96743cebcaa244ac6c35d068d28dabe7c628f8f912ad6bc8330cd6647f3',
+    'Witek': '808ba8c29edb1f89bc1a44969fddfb1fef9a8e4996a84bbc8c3502e2435652de',
+    'Miguel': 'fb420d1701eecd8f951f3834671277144b3287908bf698f5c0ef2fdacd6eb655',
+    'Eliza': '953abe48dfdfa8e256eca457f2987a119d7bf4fddc4964cde3b3b9bd12fb2d5c',
+    'Ruslan': '5f7635b6a1c0307fd33f4270e2b1437795d6f63612f13f684648bd2e6ff119c1',
+    'Vasya': 'a00c249b224dde8430dda29aad26db3b58af0706c048efa3258818a4e22b4386',
+    'Edson': '3c7a32a431aaaf0fba3365e2b56a23aa859c578c15618b0da2938411ec3b49ba',
+    'Vanshi': 'b8f935f6c4dc97d265b9ae01b575162cc132fb2ce3308af03c4363c398c950e7',
+    'Klaudia M.': '0d326e09800891fbc9b35ae697a3889817b6dc094f4d68b7d99f9ada813b8f9a',
+    'Luka': 'badc1520e836916367a6eeaf8953e9bea0c7ca2cb1832b1994dbf07b53866548',
+}
 
-# 4. Main Voting Form (using normal widgets with a form container or state management)
-# To allow instant UI updates when choosing "Other", we handle selects outside a strict st.form, 
-# or use widget keys. Let's use standard widgets with a submit block.
+MALE_CANDIDATES = [
+    "Leonidas/Spartan",
+    "Calzetin con rombos-man",
+    "Dinosaur",
+    "Mario & Yoshi",
+    "Wrestler man",
+    "Model",
+    "Male Scarecrow",
+    "Star Lord",
+    "Edward Cullen",
+    "Wolverine",
+    "Snail",
+    "Google Teams",
+    "Chef (Ratatouille)",
+]
 
-st.subheader("🕸️ Select Your Name & Cast Votes")
+FEMALE_CANDIDATES = [
+    "Black swan",
+    "Mavka (Ukranian magical creature)",
+    "Alien",
+    "Nagini",
+    "Peach",
+    "Harley Quinn's daughter",
+    "Wrestler girl",
+    "Female Scarecrow",
+    "Gamora",
+    "Mushroom",
+    "She ware-wolf",
+    "Britney Spears",
+    "Remi (Ratatouille)",
+]
 
-# Voter Identity
-voter_name = st.selectbox("👤 Who are you?", ["-- Select your name --"] + GUESTS)
+OTHER_OPTION = "Other"
 
-st.write("---")
 
-# Category 1: Best Male Costume
-men_options = list(data["men_votes"].keys()) + ["Other (Type below)"]
-chosen_man_selection = st.selectbox("🕺 Best Male Costume:", ["-- Select male contestant --"] + men_options)
+st.markdown(
+    """
+    <style>
+    .stApp {
+        color: #f8eefc;
+        background:
+            radial-gradient(circle at top, #3b1555 0%, #190c26 42%, #07040b 100%);
+    }
+    [data-testid="stSidebar"] {
+        background: linear-gradient(180deg, #12081c 0%, #281137 100%);
+    }
+    h1, h2, h3 {
+        color: #ff8a1c !important;
+        text-shadow: 0 0 8px rgba(184, 78, 255, 0.8);
+    }
+    .spooky-card {
+        padding: 1rem 1.2rem;
+        margin: 0.75rem 0 1.25rem 0;
+        border: 1px solid #9146d8;
+        border-radius: 14px;
+        background: rgba(22, 9, 33, 0.88);
+        box-shadow: 0 0 18px rgba(145, 70, 216, 0.28);
+    }
+    .small-note {
+        color: #dccce5;
+        font-size: 0.9rem;
+    }
+    div.stButton > button {
+        border: 1px solid #ff8a1c;
+        border-radius: 10px;
+        font-weight: 700;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-custom_man = ""
-if chosen_man_selection == "Other (Type below)":
-    custom_man = st.text_input("✍️ Enter custom Male Costume name:")
 
-st.write("---")
+def utc_timestamp():
+    return datetime.now(timezone.utc).isoformat(timespec="seconds")
 
-# Category 2: Best Female Costume
-women_options = list(data["women_votes"].keys()) + ["Other (Type below)"]
-chosen_woman_selection = st.selectbox("💃 Best Female Costume:", ["-- Select female contestant --"] + women_options)
 
-custom_woman = ""
-if chosen_woman_selection == "Other (Type below)":
-    custom_woman = st.text_input("✍️ Enter custom Female Costume name:")
+def open_connection():
+    """Return one fresh SQLite connection for one short operation."""
+    connection = sqlite3.connect(DB_PATH, timeout=5.0, isolation_level=None)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA busy_timeout = 5000")
+    return connection
 
-st.write("---")
 
-# Submission Button
-if st.button("🕷️ Submit Secret Votes!"):
-    # Resolve final choices (handling "Other" inputs)
-    final_man = custom_man.strip() if chosen_man_selection == "Other (Type below)" else chosen_man_selection
-    final_woman = custom_woman.strip() if chosen_woman_selection == "Other (Type below)" else chosen_woman_selection
+def initialize_database():
+    connection = open_connection()
+    try:
+        connection.executescript(
+            """
+            CREATE TABLE IF NOT EXISTS participation(
+                voter_name TEXT PRIMARY KEY,
+                voted_at TEXT NOT NULL
+            );
 
-    if voter_name == "-- Select your name --":
-        st.error("Please select your name from the guest list!")
-    elif chosen_man_selection == "-- Select male contestant --" or chosen_woman_selection == "-- Select female contestant --":
-        st.error("Please choose a contestant for BOTH categories!")
-    elif chosen_man_selection == "Other (Type below)" and not custom_man.strip():
-        st.error("Please write down the name of the custom Male costume!")
-    elif chosen_woman_selection == "Other (Type below)" and not custom_woman.strip():
-        st.error("Please write down the name of the custom Female costume!")
-    elif voter_name in data["voted_guests"]:
-        st.warning(f"⚠️ **{voter_name}**, a vote has already been submitted under your name!")
-    else:
-        # Dynamically add custom contestants to dictionaries if they don't exist yet
-        if final_man not in data["men_votes"]:
-            data["men_votes"][final_man] = 0
-        if final_woman not in data["women_votes"]:
-            data["women_votes"][final_woman] = 0
+            CREATE TABLE IF NOT EXISTS ballots(
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                male_choice TEXT NOT NULL,
+                female_choice TEXT NOT NULL,
+                submitted_at TEXT NOT NULL
+            );
 
-        # Record Secret Vote globally
-        data["men_votes"][final_man] += 1
-        data["women_votes"][final_woman] += 1
-        data["voted_guests"].add(voter_name)
+            CREATE INDEX IF NOT EXISTS idx_ballots_male_choice
+            ON ballots(male_choice);
 
+            CREATE INDEX IF NOT EXISTS idx_ballots_female_choice
+            ON ballots(female_choice);
+            """
+        )
+    finally:
+        connection.close()
+
+
+def authenticate_voter(voter_name, entered_pin):
+    """Authenticate the selected voter entirely on the server."""
+    if voter_name not in PIN_HASHES:
+        return False
+
+    if len(entered_pin) != 4 or not entered_pin.isdigit():
+        return False
+
+    entered_hash = hashlib.sha256(entered_pin.encode("utf-8")).hexdigest()
+    return hmac.compare_digest(entered_hash, PIN_HASHES[voter_name])
+
+
+def submit_vote(voter_name, male_choice, female_choice):
+    """
+    Atomically reserve the voter name and write the anonymous ballot.
+
+    The participation primary key is the authoritative one-vote control.
+    The ballots table deliberately has no voter name or participation foreign
+    key, so results cannot directly map a voter to their choices.
+    """
+    connection = open_connection()
+    submitted_at = utc_timestamp()
+
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute(
+            """
+            INSERT INTO participation(voter_name, voted_at)
+            VALUES (?, ?)
+            """,
+            (voter_name, submitted_at),
+        )
+        connection.execute(
+            """
+            INSERT INTO ballots(male_choice, female_choice, submitted_at)
+            VALUES (?, ?, ?)
+            """,
+            (male_choice, female_choice, submitted_at),
+        )
+        connection.commit()
+        return "success"
+    except sqlite3.IntegrityError as exc:
+        connection.rollback()
+        if "participation.voter_name" in str(exc):
+            return "duplicate"
+        return "integrity_error"
+    except sqlite3.Error:
+        connection.rollback()
+        return "database_error"
+    finally:
+        connection.close()
+
+
+def load_results():
+    connection = open_connection()
+    try:
+        turnout_row = connection.execute(
+            "SELECT COUNT(*) AS total FROM participation"
+        ).fetchone()
+        turnout = int(turnout_row["total"])
+
+        male_results = pd.read_sql_query(
+            """
+            SELECT male_choice AS candidate, COUNT(*) AS votes
+            FROM ballots
+            GROUP BY male_choice
+            ORDER BY votes DESC, candidate COLLATE NOCASE
+            """,
+            connection,
+        )
+        female_results = pd.read_sql_query(
+            """
+            SELECT female_choice AS candidate, COUNT(*) AS votes
+            FROM ballots
+            GROUP BY female_choice
+            ORDER BY votes DESC, candidate COLLATE NOCASE
+            """,
+            connection,
+        )
+        return turnout, male_results, female_results
+    finally:
+        connection.close()
+
+
+def reset_votes():
+    connection = open_connection()
+    try:
+        connection.execute("BEGIN IMMEDIATE")
+        connection.execute("DELETE FROM ballots")
+        connection.execute("DELETE FROM participation")
+        connection.execute(
+            "DELETE FROM sqlite_sequence WHERE name = 'ballots'"
+        )
+        connection.commit()
+    except sqlite3.Error:
+        connection.rollback()
+        raise
+    finally:
+        connection.close()
+
+
+def get_admin_password():
+    try:
+        password = str(st.secrets['admin_password'])
+        if password:
+            return password
+    except Exception:
+        pass
+
+    if LOCAL_TESTING_ONLY:
+        return "Costume2026"
+
+    return None
+
+
+def resolve_choice(selected_choice, other_text, category_label):
+    if selected_choice != OTHER_OPTION:
+        return selected_choice, None
+
+    custom_choice = other_text.strip()
+    if not custom_choice:
+        return None, f"Enter the Other contestant for {category_label}."
+
+    if len(custom_choice) > 80:
+        return None, f"The Other contestant for {category_label} is too long."
+
+    return custom_choice, None
+
+
+def render_vote_page(cookie_controller):
+    st.title("ðŸŽƒ Halloween Costume Voting")
+    st.markdown(
+        """
+        <div class="spooky-card">
+            Select your own name, enter your assigned four-digit PIN, and vote
+            for one contestant in each category.
+            <div class="small-note">
+                The browser cookie is an additional reminder only. The database
+                primary key is the authoritative one-vote-per-name control.
+            </div>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    browser_marker = cookie_controller.get('costume_vote_submitted')
+    session_marker = st.session_state.get("vote_submitted_this_session", False)
+
+    if browser_marker or session_marker:
+        st.warning(
+            "This browser has a previous-vote reminder. Voting is blocked on "
+            "this device as an additional deterrent only. Cookies can be "
+            "cleared and are not the security boundary. If this reminder is "
+            "incorrect and you have not voted, ask the host for help."
+        )
+        return
+
+    with st.form("costume_vote_form", clear_on_submit=False):
+        voter_name = st.selectbox(
+            "Your name",
+            ELIGIBLE_VOTERS,
+            index=None,
+            placeholder="Choose your own name",
+        )
+        voter_pin = st.text_input(
+            "Your assigned 4-digit PIN",
+            type="password",
+            max_chars=4,
+        )
+
+        st.subheader("ðŸ§› Men's costume")
+        male_selected = st.selectbox(
+            "Choose the men's costume",
+            MALE_CANDIDATES + [OTHER_OPTION],
+            index=None,
+            placeholder="Choose a contestant",
+        )
+        male_other = st.text_input(
+            "Other men's contestant",
+            max_chars=80,
+            help="Used only when Other is selected.",
+        )
+
+        st.subheader("ðŸ§™â€â™€ï¸ Women's costume")
+        female_selected = st.selectbox(
+            "Choose the women's costume",
+            FEMALE_CANDIDATES + [OTHER_OPTION],
+            index=None,
+            placeholder="Choose a contestant",
+        )
+        female_other = st.text_input(
+            "Other women's contestant",
+            max_chars=80,
+            help="Used only when Other is selected.",
+        )
+
+        submitted = st.form_submit_button(
+            "ðŸ•¯ï¸ Submit ballot",
+            type="primary",
+            use_container_width=True,
+        )
+
+    if not submitted:
+        return
+
+    # Check the browser reminder again before any database write.
+    if cookie_controller.get('costume_vote_submitted'):
+        st.warning(
+            "This browser already has a previous-vote reminder. No database "
+            "submission was attempted. Ask the host for help if it is wrong."
+        )
+        return
+
+    if not voter_name:
+        st.error("Choose your own name.")
+        return
+
+    if not authenticate_voter(voter_name, voter_pin):
+        st.error("The selected name and PIN do not match.")
+        return
+
+    if male_selected is None or female_selected is None:
+        st.error("Choose one contestant in each category.")
+        return
+
+    male_choice, male_error = resolve_choice(
+        male_selected, male_other, "the men's category"
+    )
+    female_choice, female_error = resolve_choice(
+        female_selected, female_other, "the women's category"
+    )
+
+    if male_error:
+        st.error(male_error)
+        return
+    if female_error:
+        st.error(female_error)
+        return
+
+    result = submit_vote(voter_name, male_choice, female_choice)
+
+    if result == "success":
+        random_value = secrets.token_urlsafe(32)
+        cookie_controller.set('costume_vote_submitted', random_value)
+        st.session_state.vote_submitted_this_session = True
+        st.success("Your ballot was recorded. Happy Halloween! ðŸŽ‰")
         st.balloons()
-        st.success(f"🎉 **Thank you, {voter_name}!** Your secret votes have been registered globally!")
+    elif result == "duplicate":
+        st.error(
+            "A vote has already been submitted for this name. No second "
+            "ballot was recorded. Ask the host if you believe this is wrong."
+        )
+    else:
+        st.error(
+            "The vote could not be saved. The transaction was rolled back, "
+            "so no partial ballot was recorded."
+        )
 
-# 5. Host Admin Panel (Password Protected)
-st.divider()
-with st.expander("🔐 Host / Admin Results Panel"):
-    st.write("Access the host dashboard:")
-    
-    admin_form = st.form("admin_login_form")
-    password = admin_form.text_input("Enter Host Password:", type="password")
-    admin_login = admin_form.form_submit_button("🔑 Enter Admin Panel")
 
-    if admin_login:
-        if password == "Costume2026":
-            st.session_state["costume_admin_logged_in"] = True
-        else:
-            st.session_state["costume_admin_logged_in"] = False
-            st.error("Incorrect password.")
+def render_chart(title, result_frame):
+    st.subheader(title)
+    if result_frame.empty:
+        st.info("No votes have been recorded in this category.")
+        return
 
-    if st.session_state.get("costume_admin_logged_in", False):
-        st.success("Access Granted, Nexus!")
-        
-        st.write(f"**Total Voters:** {len(data['voted_guests'])} / {len(GUESTS)}")
-        st.write(f"**Guests Who Voted:** {', '.join(data['voted_guests']) if data['voted_guests'] else 'None yet'}")
-        st.write("---")
+    chart_frame = result_frame.set_index("candidate")[["votes"]]
+    st.bar_chart(chart_frame)
+    st.dataframe(
+        result_frame,
+        hide_index=True,
+        use_container_width=True,
+    )
 
-        # Category 1 Results
-        st.subheader("🕺 Best Male Costume Results")
-        df_men = pd.DataFrame(list(data["men_votes"].items()), columns=["Contestant", "Votes"]).sort_values(by="Votes", ascending=False)
-        st.dataframe(df_men, use_container_width=True)
-        st.bar_chart(df_men.set_index("Contestant"))
 
-        st.write("---")
+def render_admin_page():
+    st.title("ðŸ” Admin Results")
 
-        # Category 2 Results
-        st.subheader("💃 Best Female Costume Results")
-        df_women = pd.DataFrame(list(data["women_votes"].items()), columns=["Contestant", "Votes"]).sort_values(by="Votes", ascending=False)
-        st.dataframe(df_women, use_container_width=True)
-        st.bar_chart(df_women.set_index("Contestant"))
+    admin_password = get_admin_password()
+    if admin_password is None:
+        st.error(
+            "Admin access is disabled because st.secrets['admin_password'] "
+            "is not configured. Add it to .streamlit/secrets.toml. The "
+            "Costume2026 fallback works only when LOCAL_TESTING_ONLY is "
+            "deliberately changed to True."
+        )
+        return
 
-        if st.button("🔄 Reset All Tally Votes"):
-            data["voted_guests"].clear()
-            for key in list(data["men_votes"].keys()):
-                data["men_votes"][key] = 0
-            for key in list(data["women_votes"].keys()):
-                data["women_votes"][key] = 0
-            st.success("All votes have been reset!")
+    if LOCAL_TESTING_ONLY:
+        st.warning(
+            "LOCAL TESTING ONLY is enabled. Disable it and configure "
+            "st.secrets['admin_password'] before deployment."
+        )
+
+    if "admin_authenticated" not in st.session_state:
+        st.session_state.admin_authenticated = False
+
+    if not st.session_state.admin_authenticated:
+        entered_password = st.text_input("Admin password", type="password")
+        if st.button("Log in", type="primary"):
+            if hmac.compare_digest(entered_password, admin_password):
+                st.session_state.admin_authenticated = True
+                st.rerun()
+            else:
+                st.error("Incorrect admin password.")
+        return
+
+    header_left, header_right = st.columns([4, 1])
+    with header_left:
+        st.success("Admin access granted.")
+    with header_right:
+        if st.button("Log out", use_container_width=True):
+            st.session_state.admin_authenticated = False
             st.rerun()
+
+    turnout, male_results, female_results = load_results()
+
+    col1, col2 = st.columns(2)
+    col1.metric("Turnout", turnout)
+    col2.metric("Eligible voters", len(ELIGIBLE_VOTERS))
+
+    st.caption(
+        "Only aggregate results and the turnout count are displayed. "
+        "The admin panel does not show voter names or a voter-to-choice map."
+    )
+
+chart_col1, chart_col2 = st.columns(2)
+
+with chart_col1:
+    render_chart("🧛 Men's results", male_results)
+
+with chart_col2:
+    render_chart("🧙‍♀️ Women's results", female_results)
+
+st.divider()
+st.subheader("⚠️ Reset all voting data")
+st.warning(
+    "This permanently deletes participation and ballot records. It does "
+    "not remove reminder cookies already stored in guests' browsers."
+)
+
+reset_confirmed = st.checkbox(
+    "I understand that this permanently deletes all voting results."
+)
+
+    if st.button(
+        "Reset all votes",
+        disabled=not reset_confirmed,
+    ):
+        try:
+            reset_votes()
+            st.success("All database voting records were deleted.")
+            st.rerun()
+        except sqlite3.Error:
+            st.error(
+                "The reset failed. The transaction was rolled back."
+            )
+
+
+initialize_database()
+
+cookie_controller = CookieController()
+
+page = st.sidebar.radio(
+    "Navigation",
+    ["🎃 Vote", "🔐 Admin results"],
+)
+
+st.sidebar.caption(
+    "One atomic database submission per eligible voter name."
+)
+
+if page == "🎃 Vote":
+    render_vote_page(cookie_controller)
+else:
+    render_admin_page()
