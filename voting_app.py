@@ -509,4 +509,3 @@ if page == "🎃 Vote":
     render_vote_page(cookie_controller)
 else:
     render_admin_page(cookie_controller)
-```
