@@ -1,10 +1,3 @@
-Yes. This version removes names and PINs completely. It is now one vote per browser cookie, not truly one vote per person.
-
-Replace your whole script with this:
-
-```python
-# -*- coding: utf-8 -*-
-
 import streamlit
 import pandas
 import sqlite3
