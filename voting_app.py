@@ -122,7 +122,7 @@ GUESTS = [
     "Alex Rivas", "Dariana", "Yherman Alejandro", "Yisbeth", "Karolina Anderson",
     "Angel", "Frida", "Carlos Sanchez (Jarochito)", "Natalia de Jarocho", "Frida" "Ivan Santana",
     "Olaya", "Luis Daniel", "Marta", "Marco", "Mateusz", "Wera-duża",
-    "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa",
+    "Wera-mała", "Sonya", "Kateryna", "Zair", "Larisa", "Kamil", "Nastia", "Kasia D", "Adrian",
     "Adriana Ayala", "Witek", "Miguel", "Eliza", "Ruslan", "Vasya", "Edson", "Vanshi", "Klaudia M.", "Luka"
 ]
 
