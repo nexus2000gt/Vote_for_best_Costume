@@ -97,13 +97,16 @@ st.markdown(
     unsafe_allow_html=True,
 
     button[kind="secondary"] {
-    color: #ff6b6b !important;
-    border-color: #ff6b6b !important;
-}
+        color: #ff6b6b !important;
+        border-color: #ff6b6b !important;
+    }
 
-button[kind="secondary"] p {
-    color: #ff6b6b !important;
-}
+    button[kind="secondary"] p {
+        color: #ff6b6b !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 
