@@ -261,7 +261,7 @@ def render_vote_page(cookie_controller):
         <div class="spooky-card">
             Vote for one contestant in each category.
             <div class="small-note">
-                One submission is allowed per person.
+                Only one submission is allowed per person.
             </div>
         </div>
         """,
