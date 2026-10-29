@@ -48,6 +48,7 @@ FEMALE_CANDIDATES = [
     "Female Scarecrow",
     "Gamora",
     "Mushroom",
+    "Outlook",
     "She ware-wolf",
     "Britney Spears",
     "Remi (Ratatouille)",
