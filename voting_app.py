@@ -35,6 +35,7 @@ MALE_CANDIDATES = [
     "Snail",
     "Google Teams",
     "Chef (Ratatouille)",
+    "Woody",
 ]
 
 FEMALE_CANDIDATES = [
@@ -50,7 +51,7 @@ FEMALE_CANDIDATES = [
     "Mushroom",
     "Outlook",
     "She ware-wolf",
-    "Britney Spears",
+    "Britney Spears (From "Hit me baby one more time")",
     "Remi (Ratatouille)",
     "Fairy",
     "Coca-cola",
