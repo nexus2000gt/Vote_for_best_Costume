@@ -51,7 +51,7 @@ FEMALE_CANDIDATES = [
     "Mushroom",
     "Outlook",
     "She ware-wolf",
-    "Britney Spears (From "Hit me baby one more time")",
+    "Britney Spears (From 'Hit me baby one more time')",
     "Remi (Ratatouille)",
     "Fairy",
     "Coca-cola",
